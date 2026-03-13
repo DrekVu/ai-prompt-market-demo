@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Prompt Marketplace – Decentralized Prompt & Dataset Hub</title>
+  <meta name="description" content="Upload, score, and monetize AI prompts & datasets on Shelby (Aptos)."/>
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --text: #e0e0ff;
+      --accent: #6c5ce7;
+      --accent-dark: #5a4bc7;
+      --card: #1a1a2e;
+      --green: #00ff9d;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+    header { text-align: center; padding: 60px 0 40px; }
+    h1 { font-size: 3.5rem; margin: 0; background: linear-gradient(90deg, #a78bfa, #00ff9d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .stats { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin: 40px 0; }
+    .stat { background: var(--card); padding: 20px 40px; border-radius: 12px; text-align: center; min-width: 180px; }
+    .stat h3 { margin: 0; font-size: 2rem; color: var(--green); }
+    .stat p { margin: 8px 0 0; color: #aaa; }
+    .demo-section { background: var(--card); border-radius: 16px; padding: 40px; margin: 40px 0; text-align: center; }
+    .upload-zone {
+      border: 3px dashed var(--accent);
+      border-radius: 16px;
+      padding: 80px 20px;
+      margin: 30px 0;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .upload-zone:hover { border-color: var(--green); background: rgba(108,92,231,0.1); }
+    .upload-zone.dragover { border-color: var(--green); background: rgba(0,255,157,0.1); }
+    #log { background: #000; color: #0f0; padding: 16px; border-radius: 8px; height: 200px; overflow-y: auto; font-family: monospace; text-align: left; margin-top: 20px; }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin: 60px 0; }
+    .step { background: var(--card); padding: 30px; border-radius: 12px; text-align: center; }
+    .step h3 { color: var(--accent); font-size: 1.8rem; }
+    footer { text-align: center; padding: 40px 0; color: #777; }
+    button { background: var(--accent); color: white; border: none; padding: 14px 32px; border-radius: 8px; font-size: 1.1rem; cursor: pointer; margin-top: 20px; }
+    button:hover { background: var(--accent-dark); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AI Prompt Marketplace</h1>
+      <p style="font-size: 1.3rem; margin-top: 16px;">Decentralized hub for AI prompts & datasets on Shelby (Aptos)</p>
+    </header>
+
+    <div class="stats">
+      <div class="stat"><h3 id="datasets">0</h3><p>Datasets Available</p></div>
+      <div class="stat"><h3 id="storage">0 TB</h3><p>Storage Used</p></div>
+      <div class="stat"><h3 id="earnings">$0 K</h3><p>Creator Earnings</p></div>
+      <div class="stat"><h3 id="nodes">0</h3><p>Active Nodes</p></div>
+    </div>
+
+    <section class="demo-section">
+      <h2>Live Demo: Upload Your Prompt / Dataset</h2>
+      <div id="upload-zone" class="upload-zone">
+        <p>Drag & drop your file here (JSON, TXT, ZIP, images... any format)</p>
+        <p>or click to select</p>
+      </div>
+      <input type="file" id="file-input" style="display:none;" accept=".json,.txt,.csv,.zip,image/*" />
+      <div id="status" style="margin: 20px 0; font-weight: bold;"></div>
+      <div id="log"></div>
+      <button id="simulate-buy">Simulate Purchase (for demo)</button>
+    </section>
+
+    <section class="steps">
+      <div class="step">
+        <h3>01. Upload</h3>
+        <p>Drag-drop your prompt/dataset. Encrypted & stored on Shelby hot storage – Web2 speed.</p>
+      </div>
+      <div class="step">
+        <h3>02. Score</h3>
+        <p>AI (Claude-like) scores quality, diversity, value for training – auto & on-chain verifiable.</p>
+      </div>
+      <div class="step">
+        <h3>03. Earn</h3>
+        <p>AI devs buy with micro-payments (APT/ShelbyUSD) → instant payout to your Petra wallet.</p>
+      </div>
+    </section>
+
+    <section style="text-align:center; margin:60px 0;">
+      <h2>Early Access Coming Soon</h2>
+      <p>Join waitlist for testnet access & Shelby Early Access perks.</p>
+      <input type="email" placeholder="Your email" style="padding:12px; width:300px; border-radius:8px; border:none; margin-right:10px;" />
+      <button>Join Waitlist</button>
+    </section>
+
+    <footer>
+      Built by @0x_mcp | Inspired by decentralized AI data economy on Shelby & Aptos | 2026
+    </footer>
+  </div>
+
+  <script>
+    const uploadZone = document.getElementById('upload-zone');
+    const fileInput = document.getElementById('file-input');
+    const status = document.getElementById('status');
+    const log = document.getElementById('log');
+
+    function addLog(msg) {
+      const entry = document.createElement('div');
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', handleFiles);
+
+    ['dragover', 'dragenter'].forEach(event => uploadZone.addEventListener(event, e => {
+      e.preventDefault();
+      uploadZone.classList.add('dragover');
+    }));
+
+    ['dragleave', 'drop'].forEach(event => uploadZone.addEventListener(event, e => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      if (event === 'drop') {
+        fileInput.files = e.dataTransfer.files;
+        handleFiles();
+      }
+    }));
+
+    function handleFiles() {
+      const file = fileInput.files[0];
+      if (!file) return;
+      status.textContent = `Processing ${file.name} (${(file.size/1024).toFixed(1)} KB)...`;
+      addLog(`Initializing upload for ${file.name}`);
+
+      setTimeout(() => {
+        addLog('Files uploaded to Shelby nodes');
+        addLog('AI Quality Scoring in progress...');
+        const score = (Math.random() * 30 + 70).toFixed(1);
+        addLog(`AI Quality Score: ${score}/100`);
+        addLog('Upload complete! Dataset ready for marketplace.');
+        status.textContent = 'Upload simulated successfully!';
+        // Fake update stats
+        document.getElementById('datasets').textContent = '1';
+      }, 3000);
+    }
+
+    document.getElementById('simulate-buy').addEventListener('click', () => {
+      addLog('New dataset purchased · 0.35 APT · 5s ago');
+      addLog('Creator earnings updated: +0.35 APT');
+      document.getElementById('earnings').textContent = '$0.35 K';
+    });
+  </script>
+</body>
+</html>
